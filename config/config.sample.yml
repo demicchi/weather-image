@@ -1,0 +1,20 @@
+# Note that all relative paths are based on the path of index.php
+logging:
+  # level = {debug|info|warn|error}
+  level: debug
+  file: ./log/log.txt
+default_style: jma-225x250-1
+
+include_dir:
+  - ./config/data_source/jma
+  - ./config/style
+
+data_source:
+  jma:
+    timezone: Asia/Tokyo
+    forecast_url: https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json
+    encoding: UTF-8
+    area:
+      weather: '130010' # 東京地方
+      probability_of_precipitation: '130010' # 東京地方
+      temperature: '44132' # 東京

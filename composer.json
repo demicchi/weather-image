@@ -1,0 +1,14 @@
+{
+  "require": {
+    "php": ">=8.1",
+    "ext-gd": "*",
+    "ext-yaml": "*",
+    "ext-mbstring": "*",
+    "ext-intl": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "StudioDemmys\\WeatherImage\\": "class/"
+    }
+  }
+}

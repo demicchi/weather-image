@@ -1,0 +1,231 @@
+style:
+  jma-225x250-1:
+    background_image: ./image/background-jma-225x250-1.png
+    labels:
+      today_weather_description:
+        source: Jma
+        type: weather_description
+        parameter:
+          target_date: today
+          max_characters_per_line: 5
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 14
+          color: [0, 0, 0, 0]
+        box:
+          position: [105, 0]
+          size: [120, 54]
+      today_temp_max:
+        source: Jma
+        type: temp_max
+        parameter:
+          target_date: today
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 18
+          color: [255, 0, 0, 0]
+        box:
+          position: [110, 54]
+          size: [30, 24]
+      today_temp_min:
+        source: Jma
+        type: temp_min
+        parameter:
+          target_date: today
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 18
+          color: [0, 0, 255, 0]
+        box:
+          position: [165, 54]
+          size: [30, 24]
+      today_pop_00:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: today_00
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [105, 91]
+          size: [20, 18]
+      today_pop_06:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: today_06
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [132, 91]
+          size: [20, 18]
+      today_pop_12:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: today_12
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [159, 91]
+          size: [20, 18]
+      today_pop_18:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: today_18
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [186, 91]
+          size: [20, 18]
+      tomorrow_weather_description:
+        source: Jma
+        type: weather_description
+        parameter:
+          target_date: tomorrow
+          max_characters_per_line: 5
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 14
+          color: [0, 0, 0, 0]
+        box:
+          position: [105, 110]
+          size: [120, 54]
+      tomorrow_temp_max:
+        source: Jma
+        type: temp_max
+        parameter:
+          target_date: tomorrow
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 18
+          color: [255, 0, 0, 0]
+        box:
+          position: [110, 164]
+          size: [30, 24]
+      tomorrow_temp_min:
+        source: Jma
+        type: temp_min
+        parameter:
+          target_date: tomorrow
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 18
+          color: [0, 0, 255, 0]
+        box:
+          position: [165, 164]
+          size: [30, 24]
+      tomorrow_pop_00:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: tomorrow_00
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [105, 201]
+          size: [20, 18]
+      tomorrow_pop_06:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: tomorrow_06
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [132, 201]
+          size: [20, 18]
+      tomorrow_pop_12:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: tomorrow_12
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [159, 201]
+          size: [20, 18]
+      tomorrow_pop_18:
+        source: Jma
+        type: pop
+        parameter:
+          target_datetime: tomorrow_18
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 12
+          color: [0, 0, 0, 0]
+        box:
+          position: [186, 201]
+          size: [20, 18]
+      publish_date:
+        source: Jma
+        type: report_datetime
+        parameter:
+          format: 'Y-m-d\TH:i:sP'
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 9
+          color: [0, 0, 0, 0]
+        box:
+          position: [75, 235]
+          size: [150, 15]
+      today_title:
+        source: Date
+        type: date
+        parameter:
+          format: 'n/jの天気'
+          target_date: today
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 14
+          color: [0, 0, 0, 0]
+        box:
+          position: [0, 0]
+          size: [104, 30]
+      tomorrow_title:
+        source: Date
+        type: date
+        parameter:
+          format: 'n/jの天気'
+          target_date: tomorrow
+        font:
+          file: ./font/ZenMaruGothic-Medium.ttf
+          size: 14
+          color: [0, 0, 0, 0]
+        box:
+          position: [0, 110]
+          size: [104, 30]
+# TODO: support `images`
+    images:
+      today_weather_image:
+        source: Jma
+        type: weather
+        parameter:
+          target_date: today
+        box:
+          position: [0, 30]
+          size: [100, 80]
+      tomorrow_weather_image:
+        source: Jma
+        type: weather
+        parameter:
+          target_date: tomorrow
+        box:
+          position: [0, 140]
+          size: [100, 80]
+
