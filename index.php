@@ -48,16 +48,13 @@ if (isset($_GET["style"])) {
     $style = $query_style;
 }
 
-
 // --------------------------------------------------------------------------------
 // Prepare a base image
 // --------------------------------------------------------------------------------
 
-
 $image = imagecreatefromstring(file_get_contents(Config::getConfig("style/{$style}/background_image")));
 if ($image === false)
     exit("error");
-
 
 // --------------------------------------------------------------------------------
 // Render labels
@@ -102,11 +99,47 @@ if (is_array($labels)) {
     }
 }
 
+// --------------------------------------------------------------------------------
+// Render user images
+// --------------------------------------------------------------------------------
 
-// TODO: Render images
-// $user_images = Config::getConfigOrSetIfUndefined("style/{$style}/images");
-
-
+$user_images = Config::getConfigOrSetIfUndefined("style/{$style}/images");
+if (is_array($user_images)) {
+    foreach ($user_images as $user_image_name => $user_image) {
+        Logging::debug("Render a user image -- {$user_image_name}");
+        $source = Config::getConfig("style/{$style}/images/{$user_image_name}/source");
+        switch (strtolower($source)) {
+            case "jma":
+                $render_image = $jma->getImage(
+                    Config::getConfig("style/{$style}/images/{$user_image_name}/type"),
+                    Config::getConfigOrSetIfUndefined("style/{$style}/images/{$user_image_name}/parameter", null),
+                    $now
+                );
+                if ($render_image !== false) {
+                    $render_image_width = imagesx($render_image);
+                    $render_image_height = imagesy($render_image);
+                    imagecopyresampled(
+                        $image,
+                        $render_image,
+                        (Config::getConfig("style/{$style}/images/{$user_image_name}/box/position"))[0],
+                        (Config::getConfig("style/{$style}/images/{$user_image_name}/box/position"))[1],
+                        0,
+                        0,
+                        (Config::getConfig("style/{$style}/images/{$user_image_name}/box/size"))[0],
+                        (Config::getConfig("style/{$style}/images/{$user_image_name}/box/size"))[1],
+                        $render_image_width,
+                        $render_image_height
+                    );
+                } else {
+                    Logging::warn("The image is invalid");
+                    exit("error");
+                }
+                break;
+            default:
+                exit("error");
+        }
+    }
+}
 
 // --------------------------------------------------------------------------------
 // Export png

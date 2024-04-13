@@ -210,7 +210,6 @@ style:
         box:
           position: [0, 110]
           size: [104, 30]
-# TODO: support `images`
     images:
       today_weather_image:
         source: Jma
