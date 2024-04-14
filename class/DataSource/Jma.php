@@ -366,6 +366,8 @@ class Jma implements DataSourceInterface
         if ($strict) {
             $previous = null;
             foreach ($datetime_list as $key => $datetime) {
+                // skip if the previous points to a future datetime
+                // memo: inverted `timeDefines` member seems to be ignored by the JMA official scripts
                 if (!is_null($previous) && $datetime <= $previous)
                     continue;
                 if ($datetime->getTimestamp() == $reference_timestamp)
@@ -378,6 +380,8 @@ class Jma implements DataSourceInterface
             $candidate_key = 0;
             $previous = null;
             foreach ($datetime_list as $key => $datetime) {
+                // skip if the previous points to a future datetime
+                // memo: inverted `timeDefines` member seems to be ignored by the JMA official scripts
                 if (!is_null($previous) && $datetime <= $previous)
                     continue;
                 $diff = abs($reference_timestamp - $datetime->getTimestamp());
@@ -460,7 +464,7 @@ class Jma implements DataSourceInterface
             "area_name" => $area_data["area"]["name"],
             "area_code" => $area_data["area"]["code"],
             "time_define" => $time_define_list[$index],
-            "content" => (empty($content) ? null : $content),
+            "content" => ((empty($content) && !is_numeric($content)) ? null : $content), // zeros should be returned as is
         ];
     }
     
