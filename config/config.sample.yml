@@ -19,3 +19,12 @@ data_source:
       weather: '130010' # 東京地方
       probability_of_precipitation: '130010' # 東京地方
       temperature: '44132' # 東京
+    # fallback: whether to use values in the cache instead when the forecast data are not defined in the latest json.
+    # applicable only to pop_concat, pop, temp_min and temp_max.
+    fallback: true
+    cache:
+      file: ./cache/data_source/jma/cache_130000.json
+      # lifetime: how long to avoid fetching `forecast_url` in seconds
+      lifetime: 300
+      # history: how long the forecast data should be cached in seconds
+      history: 259200

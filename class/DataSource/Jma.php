@@ -24,23 +24,97 @@ class Jma implements DataSourceInterface
     const FORECAST_CONTENT_TEMPERATURE_MAXIMUM = "tempsMax";
     
     protected array $forecast_data;
-    public function __construct()
-    {
-        $this->forecast_data = json_decode(
-            file_get_contents(Config::getConfig("data_source/jma/forecast_url")),
-            null,
-            512,
-            JSON_BIGINT_AS_STRING | JSON_INVALID_UTF8_IGNORE | JSON_OBJECT_AS_ARRAY | JSON_THROW_ON_ERROR
-        );
-    }
+    protected \DateTimeImmutable $now;
+    protected array $cache_data;
+    protected ?int $previous_timestamp;
     
-    public function getText(string $type, ?array $parameter, ?\DateTimeInterface $now): ?string
+    public function __construct(?\DateTimeInterface $now = null, ?int $cache_timestamp = null)
     {
         if (is_null($now))
-            $now = new \DateTimeImmutable(
+            $this->now = new \DateTimeImmutable(
                 "now",
                 new \DateTimeZone(Config::getConfigOrSetIfUndefined("data_source/jma/timezone", "+09:00"))
             );
+        else
+            $this->now = \DateTimeImmutable::createFromInterface($now);
+        
+        $cache_updated = false;
+        $cache_file_exists = file_exists(Config::getConfig("data_source/jma/cache/file"));
+        
+        if ($cache_file_exists) {
+            $this->cache_data = json_decode(
+                file_get_contents(Config::getConfig("data_source/jma/cache/file")),
+                null,
+                512,
+                JSON_BIGINT_AS_STRING | JSON_INVALID_UTF8_IGNORE | JSON_OBJECT_AS_ARRAY | JSON_THROW_ON_ERROR
+            );
+            
+            $expiry_timestamp = intval($cache_data["cached_timestamp"] ?? 0)
+                + Config::getConfigOrSetIfUndefined("data_source/jma/cache/lifetime", 0);
+            
+            if ($expiry_timestamp < $this->now->getTimestamp()) {
+                $this->forecast_data = json_decode(
+                    file_get_contents(Config::getConfig("data_source/jma/forecast_url")),
+                    null,
+                    512,
+                    JSON_BIGINT_AS_STRING | JSON_INVALID_UTF8_IGNORE | JSON_OBJECT_AS_ARRAY | JSON_THROW_ON_ERROR
+                );
+                $this->cache_data["cached_timestamp"] = $this->now->getTimestamp();
+                $this->cache_data["cache"][$this->getReportDateTime()->getTimestamp()] = $this->forecast_data;
+                $cache_updated = true;
+            } else {
+                $this->forecast_data = $this->cache_data["cache"][max(array_keys($this->cache_data["cache"]))];
+            }
+        } else {
+            $this->forecast_data = json_decode(
+                file_get_contents(Config::getConfig("data_source/jma/forecast_url")),
+                null,
+                512,
+                JSON_BIGINT_AS_STRING | JSON_INVALID_UTF8_IGNORE | JSON_OBJECT_AS_ARRAY | JSON_THROW_ON_ERROR
+            );
+            $this->cache_data["cached_timestamp"] = $this->now->getTimestamp();
+            $this->cache_data["cache"][$this->getReportDateTime()->getTimestamp()] = $this->forecast_data;
+            $cache_updated = true;
+        }
+        
+        $history_life_timestamp = $this->now->getTimestamp()
+            - Config::getConfigOrSetIfUndefined("data_source/jma/cache/history", 0);
+        foreach ($this->cache_data["cache"] as $key => $value) {
+            if (intval($key) < $history_life_timestamp) {
+                unset($this->cache_data["cache"][$key]);
+                $cache_updated = true;
+            }
+        }
+        
+        if ($cache_updated) {
+            file_put_contents(
+                Config::getConfig("data_source/jma/cache/file"),
+                json_encode($this->cache_data, JSON_INVALID_UTF8_IGNORE | JSON_THROW_ON_ERROR, 512),
+                LOCK_EX
+            );
+        }
+        
+        if (!is_null($cache_timestamp)) {
+            if (empty($this->cache_data["cache"][$cache_timestamp])){
+                throw new \Exception("The cache (timestamp={$cache_timestamp}) is not saved");
+                return;
+            }
+            $this->forecast_data = $this->cache_data["cache"][$cache_timestamp];
+        }
+        
+        $previous_timestamp = 0;
+        $current_timestamp = $this->getReportDateTime()->getTimestamp();
+        foreach (array_keys($this->cache_data["cache"]) as $timestamp) {
+            if ($timestamp < $current_timestamp && $previous_timestamp < $timestamp)
+                $previous_timestamp = $timestamp;
+        }
+        $this->previous_timestamp = ($previous_timestamp == 0) ? null : $previous_timestamp;
+    }
+    
+    public function getText(string $type, ?array $parameter, ?\DateTimeInterface $now = null): ?string
+    {
+        if (is_null($now))
+            $now = $this->now;
         else
             $now = \DateTimeImmutable::createFromInterface($now);
         
@@ -99,7 +173,7 @@ class Jma implements DataSourceInterface
                     $target_date
                 );
                 
-                if (is_null($content["content"]))
+                if (is_null($content["content"] ?? null))
                     return Config::getConfigOrSetIfUndefined("data_source/jma/default_none_string", "");
                 
                 $description = static::getWeatherDescription($content["content"]);
@@ -191,25 +265,45 @@ class Jma implements DataSourceInterface
                     Config::getConfig("data_source/jma/area/probability_of_precipitation"),
                     $target_date,
                     true
-                ) ?? $parameter["none_character"] ?? "-";
+                )
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"] ?? "-";
                 $content_array[] = static::getForecastData(
                     static::FORECAST_CONTENT_PROBABILITY_OF_PRECIPITATION,
                     Config::getConfig("data_source/jma/area/probability_of_precipitation"),
                     $target_date->modify("06:00"),
                     true
-                ) ?? $parameter["none_character"] ?? "-";
+                )
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"] ?? "-";
                 $content_array[] = static::getForecastData(
                     static::FORECAST_CONTENT_PROBABILITY_OF_PRECIPITATION,
                     Config::getConfig("data_source/jma/area/probability_of_precipitation"),
                     $target_date->modify("12:00"),
                     true
-                ) ?? $parameter["none_character"] ?? "-";
+                )
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"] ?? "-";
                 $content_array[] = static::getForecastData(
                     static::FORECAST_CONTENT_PROBABILITY_OF_PRECIPITATION,
                     Config::getConfig("data_source/jma/area/probability_of_precipitation"),
                     $target_date->modify("18:00"),
                     true
-                ) ?? $parameter["none_character"] ?? "-";
+                )
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"] ?? "-";
                 return implode(
                     $parameter["separator"] ?? "/",
                     $content_array
@@ -234,7 +328,7 @@ class Jma implements DataSourceInterface
                     true
                 );
                 
-                if (!is_null($content["content"]))
+                if (!is_null($content["content"] ?? null))
                     return $content["content"];
                 
                 // get data from a week forecast
@@ -246,7 +340,13 @@ class Jma implements DataSourceInterface
                     true
                 );
                 
-                return $content["content"] ?? $parameter["none_character"] ?? "-";
+                return $content["content"]
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"]
+                    ?? "-";
                 break;
                 
             case "temp_area_name":
@@ -280,7 +380,7 @@ class Jma implements DataSourceInterface
                     $target_date,
                     true
                 );
-                if (!is_null($content["content"]))
+                if (!is_null($content["content"] ?? null))
                     return $content["content"];
                 
                 // get data from a week forecast
@@ -292,7 +392,13 @@ class Jma implements DataSourceInterface
                     true
                 );
                 
-                return $content["content"] ?? $parameter["none_character"] ?? "-";
+                return $content["content"]
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"]
+                    ?? "-";
                 break;
             
             case "temp_max":
@@ -306,7 +412,7 @@ class Jma implements DataSourceInterface
                     $target_date,
                     true
                 );
-                if (!is_null($content["content"]))
+                if (!is_null($content["content"] ?? null))
                     return $content["content"];
                 
                 // get data from a week forecast
@@ -318,14 +424,25 @@ class Jma implements DataSourceInterface
                     true
                 );
                 
-                return $content["content"] ?? $parameter["none_character"] ?? "-";
+                return $content["content"]
+                    ?? (
+                        (Config::getConfigOrSetIfUndefined("data_source/jma/fallback", false) && !is_null($this->previous_timestamp))
+                            ? (new self($now, $this->previous_timestamp))->getText($type, $parameter, $now) : null
+                    )
+                    ?? $parameter["none_character"]
+                    ?? "-";
                 break;
         }
         return null;
     }
     
-    public function getImage(string $type, ?array $parameter, ?\DateTimeInterface $now): ?\GdImage
+    public function getImage(string $type, ?array $parameter, ?\DateTimeInterface $now = null): ?\GdImage
     {
+        if (is_null($now))
+            $now = $this->now;
+        else
+            $now = \DateTimeImmutable::createFromInterface($now);
+        
         switch ($type) {
             case "weather":
                 $target_date = match (strtolower($parameter["target_date"])) {
@@ -338,7 +455,7 @@ class Jma implements DataSourceInterface
                     $target_date
                 );
 
-                if (is_null($content["content"]))
+                if (is_null($content["content"] ?? null))
                     return null;
                 
                 $target_date = \DateTimeImmutable::createFromInterface($content["time_define"]);
@@ -470,7 +587,6 @@ class Jma implements DataSourceInterface
     
     protected function getReportDateTime(): ?\DateTimeImmutable
     {
-        $datetime = $this->forecast_data[0]["reportDatetime"];
         if (empty($this->forecast_data[0]["reportDatetime"]))
             return null;
         return new \DateTimeImmutable(
