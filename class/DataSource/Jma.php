@@ -49,7 +49,7 @@ class Jma implements DataSourceInterface
                 JSON_BIGINT_AS_STRING | JSON_INVALID_UTF8_IGNORE | JSON_OBJECT_AS_ARRAY | JSON_THROW_ON_ERROR
             );
             
-            $expiry_timestamp = intval($cache_data["cached_timestamp"] ?? 0)
+            $expiry_timestamp = intval($this->cache_data["cached_timestamp"] ?? 0)
                 + Config::getConfigOrSetIfUndefined("data_source/jma/cache/lifetime", 0);
             
             if ($expiry_timestamp < $this->now->getTimestamp()) {
