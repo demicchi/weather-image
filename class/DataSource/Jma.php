@@ -465,7 +465,8 @@ class Jma implements DataSourceInterface
                 
                 $image_path = static::getWeatherImagePath(
                     $content["content"],
-                    ($target_date < $threshold_date)
+                    ($target_date < $threshold_date),
+                    $parameter["style"] ?? null
                 );
                 return imagecreatefromstring(file_get_contents(Common::getAbsolutePath($image_path)));
                 break;
@@ -600,19 +601,40 @@ class Jma implements DataSourceInterface
         return $this->forecast_data[0]["publishingOffice"] ?? null;
     }
     
-    protected function getWeatherDescription(?string $weather_code): ?string
+    protected function getWeatherDescription(?string $weather_code, ?string $style = null): ?string
     {
         if (empty($weather_code))
             return null;
-        return Config::getConfigOrSetIfUndefined("data_source/jma/weather_code/{$weather_code}/weather", null);
+        if (empty($style)) {
+            $style = $this->getDefaultStyle();
+            if (empty($style))
+                return null;
+        }
+        return Config::getConfigOrSetIfUndefined("data_source/jma/styles/{$style}/weather_code/{$weather_code}/weather", null);
     }
     
-    protected function getWeatherImagePath(?string $weather_code, bool $daytime = true): ?string
+    protected function getWeatherImagePath(?string $weather_code, bool $daytime = true, ?string $style = null): ?string
     {
         if (empty($weather_code))
             return null;
-        $key = "data_source/jma/weather_code/{$weather_code}/" . ($daytime ? "image_day" : "image_night");
+        if (empty($style)) {
+            $style = $this->getDefaultStyle();
+            if (empty($style))
+                return null;
+        }
+        $key = "data_source/jma/styles/{$style}/weather_code/{$weather_code}/" . ($daytime ? "image_day" : "image_night");
         return Config::getConfigOrSetIfUndefined($key, null);
+    }
+    
+    protected function getDefaultStyle(): ?string {
+        $style = Config::getConfigOrSetIfUndefined("data_source/jma/default_style", null);
+        if (empty($style) || empty(Config::getConfigOrSetIfUndefined("data_source/jma/styles/{$style}", null))) {
+            $style_list = Config::getConfigOrSetIfUndefined("data_source/jma/styles", null);
+            if (empty($style_list))
+                return null;
+            return array_key_first($style_list);
+        }
+        return $style;
     }
     
 }
