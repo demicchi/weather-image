@@ -216,6 +216,7 @@ style:
         type: weather
         parameter:
           target_date: today
+          style: light
         box:
           position: [0, 30]
           size: [100, 80]
@@ -224,6 +225,7 @@ style:
         type: weather
         parameter:
           target_date: tomorrow
+          style: light
         box:
           position: [0, 140]
           size: [100, 80]
