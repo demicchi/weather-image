@@ -75,7 +75,7 @@ data_source:
       '270': {weather: '曇時々雪か雨', image_day: './image/data_source/jma/100x80_cloudy_sometimes_rainysnowy.png', image_night: './image/data_source/jma/100x80_cloudy_sometimes_rainysnowy.png'}
       '281': {weather: '曇後雪か雨', image_day: './image/data_source/jma/100x80_cloudy_then_rainysnowy.png', image_night: './image/data_source/jma/100x80_cloudy_then_rainysnowy.png'}
       '300': {weather: '雨', image_day: './image/data_source/jma/100x80_rainy.png', image_night: './image/data_source/jma/100x80_rainy.png'}
-      '301': {weather: '雨時々晴', image_day: './image/data_source/jma/100x80_rainy_sometimes_clear.png', image_night: './image/data_source/jma/100x80_rainy_sometiles_clear_night.png'}
+      '301': {weather: '雨時々晴', image_day: './image/data_source/jma/100x80_rainy_sometimes_clear.png', image_night: './image/data_source/jma/100x80_rainy_sometimes_clear_night.png'}
       '302': {weather: '雨時々止む', image_day: './image/data_source/jma/100x80_rainy_sometimes_cloudy.png', image_night: './image/data_source/jma/100x80_rainy_sometimes_cloudy.png'}
       '303': {weather: '雨時々雪', image_day: './image/data_source/jma/100x80_rainy_sometimes_snowy.png', image_night: './image/data_source/jma/100x80_rainy_sometimes_snowy.png'}
       '304': {weather: '雨か雪', image_day: './image/data_source/jma/100x80_rainysnowy.png', image_night: './image/data_source/jma/100x80_rainysnowy.png'}
